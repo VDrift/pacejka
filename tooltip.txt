@@ -1,0 +1,46 @@
+a0 = Shape factor 
+a1 = Load infl on lat friction coeff (*1000) (1/kN) 
+a2 = Lateral friction coefficient at load = 0 (*1000) 
+a3 = Maximum stiffness (N/deg) 
+a4 = Load at maximum stiffness (kN) 
+a5 = Camber infiuence on stiffness (%/deg/100) 
+a6 = Curvature change with load 
+a7 = Curvature at load = 0 
+a8 = Horizontal shift because of camber (deg/deg)
+a9 = Load influence on horizontal shift (deg/kN)
+a10 = Horizontal shift at load = 0 (deg)
+a111 = Camber influence on vertical shift (N/deg/kN)
+a112 = Camber influence on vertical shift (N/deg/kN**2
+a12 = Load influence on vertical shift (N/kN)
+a13 = Vertical shift at load = 0 (N)
+b0 = Shape factor 
+b1 = Load infl on long friction coeff (*1000) (1/kN) 
+b2 = Longitudinal friction coefficient at load = 0 (*1000)
+b3 = Curvature factor of stiffness (N/%/kN**2) 
+b4 = Change of stiffness with load at load = 0 (N/%/kN) 
+b5 = Change of progressivity of stiffness/load (1/kN) 
+b6 = Curvature change with load 
+b7 = Curvature change with load 
+b8 = Curvature at load = 0 
+b9 = Load influence on horizontal shift (%/kN) 
+b10 = Horizontal shift at load = 0 (%) 
+b11 = Load influence on vertical shift (N/kN) 
+b12 = Vertical shift at load = 0 (N) 
+c0 = Shape factor 
+c1 = Load influence of peak value (Nm/kN**2) 
+c2 = Load influence of peak value (Nm/kN) 
+c3 = Curvature factor of stiffness (Nm/deg/kN**2
+c4 = Change of stiffness with load at load = 0 (Nm/deg/kN) 
+c5 = Change of progressivity of stiffness/load (1/kN) 
+c6 = Camber influence on stiffness (%/deg/100) 
+c7 = Curvature change with load 
+c8 = Curvature change with load 
+c9 = Curvature at load = 0 
+c10 = Camber influence of stiffness 
+c11 = Camber influence on horizontal shift (deg/deg)
+c12 = Load influence on horizontal shift (deg/kN)
+c13 = Horizontal shift at load = 0 (deg)
+c14 = Camber influence on vertical shift (Nm/deg/kN**2
+c15 = Camber influence on vertical shift (Nm/deg/kN)
+c16 = Load influence on vertical shift (Nm/kN)
+c17 = Vertical shift at load = 0 (Nm)

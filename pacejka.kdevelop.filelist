@@ -1,0 +1,17 @@
+# KDevelop Custom Project File List
+.
+./adjustment.h
+./mainwindow.cpp
+./mainwindow.h
+./plotter.cpp
+./plotter.h
+Makefile
+adjustment.cpp
+bucketed_hashmap.h
+configfile.cpp
+configfile.h
+containeralgorithm.h
+derived.h
+main.cpp
+mainwindow.cpp
+mainwindow.h
