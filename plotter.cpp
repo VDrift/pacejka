@@ -2,6 +2,12 @@
 
 #include <vector>
 
+#if defined(WIN32) || defined(_WIN32) || defined (__WIN32) || defined(__WIN32__) \
+	|| defined (_WIN64) || defined(__CYGWIN__) || defined(__MINGW32__)
+bool isnan(float f)
+{return f != f;}
+#endif
+
 Plotter::Plotter(std::map <std::string, DERIVED <Adjustment>, AdjustmentComparator> & newmap) : adjustmentmap(newmap)
 {
 }

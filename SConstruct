@@ -1,6 +1,11 @@
+import os, sys
+
 env = Environment()
 
-env.ParseConfig('pkg-config gtkmm-2.4 --cflags --libs')
+if ( 'win32' == sys.platform or 'cygwin' == sys.platform ):
+	env.ParseConfig('c:/msys/GTK/2.0/bin/pkg-config.exe gtkmm-2.4 --cflags --libs')
+else:
+	env.ParseConfig('pkg-config gtkmm-2.4 --cflags --libs')
 env.Append(LIBPATH = ['.'])
 env.Append(CCFLAGS = ['-g3'])
 
