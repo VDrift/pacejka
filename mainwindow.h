@@ -15,10 +15,11 @@ class MainWindow : public Gtk::Window
 {
 	private:
 		//handlers
-		virtual void on_menu_file_quit()
-		{
-			hide();
-		}
+		virtual void on_menu_file_quit();
+		
+		virtual void on_menu_file_open();
+		
+		virtual void on_menu_file_save();
 		
 		virtual void slider_changed()
 		{
@@ -31,7 +32,9 @@ class MainWindow : public Gtk::Window
 		void InitPlot();
 		void InitAdjustment(const std::string & name, float val, float min, float max);
 		void ResetAdjustments();
-		void ResetAdjustmentsFor(CONFIGFILE & defaults, const std::string & shortname, std::map <std::string, DERIVED <Adjustment>, AdjustmentComparator> & adjustmentmap);
+		void ResetAdjustmentsFor(CONFIGFILE & sourcefile, const std::string & section, const std::string & shortname, bool save_to_file = false);
+		void ResetAdjustmentsForAll(CONFIGFILE & sourcefile, const std::string & section, bool save_to_file = false);
+		std::string GetFile(bool save);
 		
 		Glib::RefPtr<Gtk::UIManager> uimanager;
 		Glib::RefPtr<Gtk::ActionGroup> actiongroup;

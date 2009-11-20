@@ -1,7 +1,42 @@
 #include "mainwindow.h"
 
 #include <gtkmm/stock.h>
+#include <gtkmm/dialog.h>
+#include <gtkmm/messagedialog.h>
 #include <memory>
+
+enum DIALOG_OPTIONS 
+{OPTION_ONE, OPTION_TWO, OPTION_INVALID};
+
+DIALOG_OPTIONS ShowDialog(const std::string & titletext, const std::string & labeltext, const std::string & buttontext1, const std::string & buttontext2)
+{
+	Gtk::Label label(labeltext);
+	Gtk::Dialog dialog(titletext, true);
+	dialog.get_vbox()->pack_start(label, Gtk::PACK_SHRINK);
+	dialog.get_vbox()->show_all_children();
+	dialog.add_button(buttontext1, Gtk::RESPONSE_YES);
+	dialog.add_button(buttontext2, Gtk::RESPONSE_NO);
+	int result = dialog.run();
+	if (result == Gtk::RESPONSE_YES)
+	{
+		return OPTION_ONE;
+	}
+	else if (result == Gtk::RESPONSE_NO)
+	{
+		return OPTION_TWO;
+	}
+	else
+	{
+		return OPTION_INVALID;
+	}
+}
+
+void ShowErrorDialog(const std::string & errortext)
+{
+	Gtk::MessageDialog dialog("Error");
+	dialog.set_secondary_text(errortext);
+	dialog.run();
+}
 
 MainWindow::MainWindow() : plot(adjustmentmap)
 {
@@ -46,6 +81,10 @@ void MainWindow::InitMenu()
 	actiongroup->add(Gtk::Action::create("FileMenu", "File"));
 	actiongroup->add(Gtk::Action::create("FileNew", Gtk::Stock::NEW),
 					 sigc::mem_fun(*this, &MainWindow::ResetAdjustments));
+	actiongroup->add(Gtk::Action::create("FileOpen", Gtk::Stock::OPEN),
+					 sigc::mem_fun(*this, &MainWindow::on_menu_file_open));
+	actiongroup->add(Gtk::Action::create("FileSave", Gtk::Stock::SAVE),
+					 sigc::mem_fun(*this, &MainWindow::on_menu_file_save));
 	actiongroup->add(Gtk::Action::create("FileQuit", Gtk::Stock::QUIT),
 						  sigc::mem_fun(*this, &MainWindow::on_menu_file_quit));
 	
@@ -60,6 +99,8 @@ void MainWindow::InitMenu()
 			"  <menubar name='MenuBar'>"
 			"    <menu action='FileMenu'>"
 			"      <menuitem action='FileNew'/>"
+			"      <menuitem action='FileOpen'/>"
+			"      <menuitem action='FileSave'/>"
 			"      <separator/>"
 			"      <menuitem action='FileQuit'/>"
 			"    </menu>"
@@ -130,23 +171,33 @@ void MainWindow::InitAdjustments(CONFIGFILE & defaults, const std::string & shor
 
 void MainWindow::ResetAdjustments()
 {
+	DIALOG_OPTIONS result = ShowDialog("New Tire", "Clear current settings and start over?", "Yes", "No");
+	if (result == OPTION_TWO)
+	{
+		return;
+	}
+	
 	CONFIGFILE defaults;
 	if (!defaults.Load("default.txt"))
 	{
 		std::cerr << "Error loading default car file: default.txt" << std::endl;
 		assert(0);
 	}
-	ResetAdjustmentsFor(defaults, "a", adjustmentmap);
-	ResetAdjustmentsFor(defaults, "b", adjustmentmap);
-	ResetAdjustmentsFor(defaults, "c", adjustmentmap);
+	ResetAdjustmentsForAll(defaults, "default");
 }
 
-void MainWindow::ResetAdjustmentsFor(CONFIGFILE & defaults, const std::string & shortname, std::map <std::string, DERIVED <Adjustment>, AdjustmentComparator> & adjustmentmap)
+void MainWindow::ResetAdjustmentsForAll(CONFIGFILE & sourcefile, const std::string & section, bool save_to_file)
+{
+	ResetAdjustmentsFor(sourcefile, section, "a", save_to_file);
+	ResetAdjustmentsFor(sourcefile, section, "b", save_to_file);
+	ResetAdjustmentsFor(sourcefile, section, "c", save_to_file);
+}
+
+void MainWindow::ResetAdjustmentsFor(CONFIGFILE & sourcefile, const std::string & section, const std::string & shortname, bool save_to_file)
 {
 	assert(!shortname.empty());
-	std::string section("default");
 	std::list <std::string> params;
-	defaults.GetParamList(params, section);
+	sourcefile.GetParamList(params, section);
 	params.sort(AdjustmentComparator());
 	for (std::list <std::string>::iterator i = params.begin(); i != params.end(); i++)
 	{
@@ -154,9 +205,17 @@ void MainWindow::ResetAdjustmentsFor(CONFIGFILE & defaults, const std::string & 
 		if ((*i)[0] == shortname[0])
 		{
 			std::string paramname = *i;
-			float val(0);
-			defaults.GetParam(section+"."+paramname, val);
-			adjustmentmap[*i]->GetAdjustment().set_value(val);
+			if (adjustmentmap.find(*i) != adjustmentmap.end())
+			{
+				if (save_to_file)
+					sourcefile.SetParam(section+"."+paramname, adjustmentmap[*i]->GetValue());
+				else
+				{
+					float val(0);
+					sourcefile.GetParam(section+"."+paramname, val);
+					adjustmentmap[*i]->GetAdjustment().set_value(val);
+				}
+			}
 		}
 	}
 }
@@ -185,4 +244,120 @@ void MainWindow::InitAdjustment(const std::string & name, float val, float min, 
 	result.first->second->GetAdjustment().signal_value_changed().connect(sigc::mem_fun(*this,
 										&MainWindow::slider_changed));
 	adjustparentbox.pack_start(result.first->second->GetBox(), Gtk::PACK_SHRINK);
+}
+
+void MainWindow::on_menu_file_open()
+{
+	std::string filename = GetFile(false);
+	if (filename.size() > 4 && filename.substr(filename.size()-4) == ".car")
+	{
+		CONFIGFILE car;
+		if (!car.Load(filename))
+		{
+			ShowErrorDialog("Couldn't open file " + filename);
+		}
+		else
+		{
+			DIALOG_OPTIONS result = ShowDialog("Load Tire", "Load front or rear tire?", "Front tire", "Rear tire");
+			if (result == OPTION_ONE)
+			{
+				ResetAdjustmentsForAll(car, "tire-front");
+			}
+			else if (result == OPTION_TWO)
+			{
+				ResetAdjustmentsForAll(car, "tire-rear");
+			}
+		}
+	}
+	else
+		ShowErrorDialog("Only VDrift .car format files are supported");
+}
+
+void MainWindow::on_menu_file_save()
+{
+	std::string filename = GetFile(true);
+	if (filename.size() > 4 && filename.substr(filename.size()-4) == ".car")
+	{
+		CONFIGFILE car;
+		if (!car.Load(filename))
+		{
+			ShowErrorDialog("Couldn't open file " + filename + ".\nYou can only save to existing VDrift .car files.");
+		}
+		else
+		{
+			DIALOG_OPTIONS result = ShowDialog("Save Tire", "Save to front or rear tire?", "Front tire", "Rear tire");
+			if (result == OPTION_ONE)
+			{
+				ResetAdjustmentsForAll(car, "tire-front", true);
+				car.Write();
+			}
+			else if (result == OPTION_TWO)
+			{
+				ResetAdjustmentsForAll(car, "tire-rear", true);
+				car.Write();
+			}
+		}
+	}
+	else
+		ShowErrorDialog("Couldn't open file " + filename + "\nOnly saving to existing VDrift .car files is supported.");
+}
+
+std::string MainWindow::GetFile(bool save)
+{
+	Gtk::FileChooserAction action = Gtk::FILE_CHOOSER_ACTION_OPEN;
+	std::string prompt = "Please choose a file to open";
+	if (save)
+	{
+		action = Gtk::FILE_CHOOSER_ACTION_SAVE;
+		prompt = "Please choose a file to save to";
+	}
+	Gtk::FileChooserDialog dialog(prompt, action);
+	dialog.set_transient_for(*this);
+
+	//Add response buttons the the dialog:
+	dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+	dialog.add_button(Gtk::Stock::OPEN, Gtk::RESPONSE_OK);
+
+	//Add filters, so that only certain file types can be selected:
+
+	Gtk::FileFilter filter_any;
+	filter_any.set_name("Any files");
+	filter_any.add_pattern("*");
+	Gtk::FileFilter filter_cars;
+	filter_cars.set_name("VDrift .car files");
+	filter_cars.add_pattern("*.car");
+	dialog.add_filter(filter_cars);
+	dialog.add_filter(filter_any);
+
+	//Show the dialog and wait for a user response:
+	int result = dialog.run();
+
+	//Handle the response:
+	switch (result)
+	{
+	case (Gtk::RESPONSE_OK):
+	{
+		return dialog.get_filename();
+		break;
+	}
+	case (Gtk::RESPONSE_CANCEL):
+	{
+		return "";
+		break;
+	}
+	default:
+	{
+		return "";
+		break;
+	}
+	}
+}
+
+void MainWindow::on_menu_file_quit()
+{
+	DIALOG_OPTIONS result = ShowDialog("Quit", "Are you sure you want to quit?", "Yes", "No");
+	if (result == OPTION_ONE)
+	{
+		hide();
+	}
 }
